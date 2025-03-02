@@ -1,0 +1,2508 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Granthik AI</title>
+    
+
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>  -->
+
+<!-- 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Granthik_Logo.svg/1280px-Granthik_Logo.svg.png" type="image/png">
+    <style>
+
+        body {
+            background-color: #0A0A0A;
+            color: #FFFFFF;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #0A0A0A, #1A1A1A);
+            padding: 150px 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #FF2E2E;
+            text-shadow: 0 0 10px rgba(255, 46, 46, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(255, 46, 46, 0.7);
+            }
+            100% {
+                text-shadow: 0 0 20px rgba(255, 46, 46, 1);
+            }
+        }
+
+        .hero-section p {
+            font-size: 1.5rem;
+            color: #CCCCCC;
+        }
+
+        .hero-section .btn-primary {
+            background-color: #FF2E2E;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        .hero-section .btn-primary:hover {
+            background-color: #FF5E5E;
+            transform: translateY(-5px);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .file-input {
+            border: 2px dashed #ff2e2e;
+            padding: 15px;
+            text-align: center;
+            color: #ff5e5e;
+            background: #0A0A0A;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .file-input:hover {
+            border-color: #ff5e5e;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .results {
+            background: #1A1A1A;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .result-tag {
+            display: inline-block;
+            background: #ff2e2e;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .folder {
+            background-color: #FF2E2E;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .folder:hover {
+            background-color: #FF5E5E;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="hero-section">
+    <div>
+        <h1>Granthik AI - Document Classifier</h1>
+        <p>Upload your document for classification and get categorized results!</p>
+    </div>
+</div>
+
+<div class="container upload-section">
+    <h3>Upload Your Document</h3>
+    <div class="file-input">
+        <input type="file" id="fileInput" />
+    </div>
+    <div class="upload-btn-container">
+        <button class="btn-primary" id="uploadBtn">Upload</button>
+        <div id="loading" class="hidden">Uploading... Please wait.</div>
+    </div>
+    <div id="result" class="results hidden"></div>
+</div>
+
+<div class="file-list" id="fileList"></div>
+
+<script>
+    let folders = {}; // Object to store folders and their contents
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+        const fileInput = document.getElementById("fileInput");
+        const resultDiv = document.getElementById("result");
+        const loadingText = document.getElementById("loading");
+
+        if (!fileInput.files.length) {
+            alert("Please select a file!");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const apiURL = "https://cbcc-34-145-249-28.ngrok-free.app/upload/"; // Replace with your actual endpoint
+
+        try {
+            loadingText.classList.remove("hidden");
+            resultDiv.classList.add("hidden");
+
+            const response = await fetch(apiURL, {
+                method: "POST",
+                body: formData
+            });
+
+            loadingText.classList.add("hidden");
+            resultDiv.classList.remove("hidden");
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <p><strong>Filename:</strong> ${data.filename}</p>
+                    <p><strong>Category:</strong> ${data.category}</p>
+                    <div class="result-tag">${data.category}</div>
+                `;
+                createFolder(data.category, data.filename); // Create folder and add file to it
+            } else {
+                resultDiv.innerHTML = `<p style="color: red;">Error: Something went wrong!</p>`;
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            loadingText.classList.add("hidden");
+            resultDiv.classList.remove("hidden");
+            resultDiv.innerHTML = `<p style="color: red;">Failed to connect to the server. Check your API URL.</p>`;
+        }
+    });
+
+    // Function to create a folder for the uploaded document category
+    function createFolder(category, filename) {
+        if (!folders[category]) {
+            folders[category] = [];
+        }
+
+        // Add the file to the folder
+        folders[category].push(filename);
+
+        // Display the folder with the files inside it
+        const fileListDiv = document.getElementById("fileList");
+        let folderDiv = document.getElementById(category);
+
+        if (!folderDiv) {
+            folderDiv = document.createElement("div");
+            folderDiv.id = category;
+            folderDiv.classList.add("folder");
+            folderDiv.textContent = `${category} Folder`;
+            fileListDiv.appendChild(folderDiv);
+        }
+
+        // Add the uploaded file inside the folder
+        const fileElement = document.createElement("div");
+        fileElement.textContent = filename;
+        folderDiv.appendChild(fileElement);
+    }
+</script>
+
+</body>
+</html> -->
+<!-- 
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Granthik_Logo.svg/1280px-Granthik_Logo.svg.png" type="image/png">
+    <style>
+        body {
+            background-color: #0A0A0A;
+            color: #FFFFFF;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #0A0A0A, #1A1A1A);
+            padding: 150px 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #FF2E2E;
+            text-shadow: 0 0 10px rgba(255, 46, 46, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(255, 46, 46, 0.7);
+            }
+            100% {
+                text-shadow: 0 0 20px rgba(255, 46, 46, 1);
+            }
+        }
+
+        .hero-section p {
+            font-size: 1.5rem;
+            color: #CCCCCC;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            padding: 20px;
+        }
+
+        .file-input {
+            border: 2px dashed #ff2e2e;
+            padding: 15px;
+            text-align: center;
+            color: #ff5e5e;
+            background: #0A0A0A;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .file-input:hover {
+            border-color: #ff5e5e;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background-color: #FF2E2E;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s, transform 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background-color: #FF5E5E;
+            transform: translateY(-5px);
+        }
+
+        .results {
+            background: #1A1A1A;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .result-tag {
+            display: inline-block;
+            background: #ff2e2e;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .folder {
+            background-color: #FF2E2E;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+
+        .folder:hover {
+            background-color: #FF5E5E;
+        }
+
+        .folder-content {
+            background-color: #2A2A2A;
+            border-radius: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .folder-content div {
+            color: #FF5E5E;
+            padding: 5px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #555;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="hero-section">
+    <div>
+        <h1>Granthik AI - Document Classifier</h1>
+        <p>Upload your document for classification and get categorized results!</p>
+    </div>
+</div>
+
+<div class="container upload-section">
+    <h3>Upload Your Document</h3>
+    <div class="file-input">
+        <input type="file" id="fileInput" />
+    </div>
+    <div class="upload-btn-container">
+        <button class="btn-primary" id="uploadBtn">Upload</button>
+        <div id="loading" class="hidden">Uploading... Please wait.</div>
+    </div>
+    <div id="result" class="results hidden"></div>
+</div>
+
+<div class="file-list" id="fileList"></div>
+
+<script>
+    let folders = {}; // Object to store folders and their contents
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+        const fileInput = document.getElementById("fileInput");
+        const resultDiv = document.getElementById("result");
+        const loadingText = document.getElementById("loading");
+
+        if (!fileInput.files.length) {
+            alert("Please select a file!");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const apiURL = "https://cbcc-34-145-249-28.ngrok-free.app/upload/"; // Replace with your actual endpoint
+
+        try {
+            loadingText.classList.remove("hidden");
+            resultDiv.classList.add("hidden");
+
+            const response = await fetch(apiURL, {
+                method: "POST",
+                body: formData
+            });
+
+            loadingText.classList.add("hidden");
+            resultDiv.classList.remove("hidden");
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <p><strong>Filename:</strong> ${data.filename}</p>
+                    <p><strong>Category:</strong> ${data.category}</p>
+                    <div class="result-tag">${data.category}</div>
+                `;
+                createFolder(data.category, data.filename); // Create folder and add file to it
+            } else {
+                resultDiv.innerHTML = `<p style="color: red;">Error: Something went wrong!</p>`;
+            }
+        } catch (error) {
+            console.error("Fetch error:", error);
+            loadingText.classList.add("hidden");
+            resultDiv.classList.remove("hidden");
+            resultDiv.innerHTML = `<p style="color: red;">Failed to connect to the server. Check your API URL.</p>`;
+        }
+    });
+
+    // Function to create a folder for the uploaded document category
+    function createFolder(category, filename) {
+        if (!folders[category]) {
+            folders[category] = [];
+        }
+
+        // Add the file to the folder
+        folders[category].push(filename);
+
+        // Display the folder with the files inside it
+        const fileListDiv = document.getElementById("fileList");
+        let folderDiv = document.getElementById(category);
+
+        if (!folderDiv) {
+            folderDiv = document.createElement("div");
+            folderDiv.id = category;
+            folderDiv.classList.add("folder");
+            folderDiv.textContent = `${category} Folder`;
+            const folderContentDiv = document.createElement("div");
+            folderContentDiv.classList.add("folder-content");
+            folderDiv.appendChild(folderContentDiv);
+            fileListDiv.appendChild(folderDiv);
+        }
+
+        // Add the uploaded file inside the folder
+        const fileElement = document.createElement("div");
+        fileElement.textContent = filename;
+        folderDiv.querySelector(".folder-content").appendChild(fileElement);
+    }
+</script>
+
+</body>
+</html> -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon"
+        href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Granthik_Logo.svg/1280px-Granthik_Logo.svg.png"
+        type="image/png">
+    <style>
+        body {
+            background-color: #FFFFFF;
+            color: #000000;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .icon-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 4rem;
+            color: rgb(58, 114, 243);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #F0F0F0, #D9EAFB);
+            padding: 100px 0;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #007BFF;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            }
+
+            100% {
+                text-shadow: 0 0 20px rgba(0, 123, 255, 1);
+            }
+        }
+
+        .hero-section p {
+            font-size: 1.5rem;
+            color: #555555;
+        }
+
+        .hero-section .btn-primary {
+            background-color: #007BFF;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s, transform 0.3s;
+            color: white;
+        }
+
+        .hero-section .btn-primary:hover {
+            background-color: #3399FF;
+            transform: translateY(-5px);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: #D9EAFB;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            margin: 50px auto;
+        }
+
+        .file-input {
+            border: 2px dashed #007BFF;
+            padding: 50px;
+            text-align: center;
+            color: #3399FF;
+            background: #FFFFFF;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .file-input:hover {
+            border-color: #3399FF;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-btn-container button {
+            padding: 15px 35px;
+            font-size: 1.5rem;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .upload-btn-container button:hover {
+            background-color: #3399FF;
+        }
+
+        .results {
+            background: #D9EAFB;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #000000;
+        }
+
+        .result-tag {
+            display: inline-block;
+            background: #007BFF;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .metadata {
+            margin-top: 15px;
+            background: #A3C4F3;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .folder {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            overflow-y: auto;
+            height: 300px;
+        }
+
+        .folder:hover {
+            background-color: #3399FF;
+        }
+
+        .folder div {
+            margin-top: 5px;
+            font-size: 14px;
+            padding: 5px;
+            background-color: #A3C4F3;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .folders-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2rem;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .folders-button:hover {
+            background-color: #3399FF;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero-section">
+        <button id="foldersButton" class="folders-button">Folders</button>
+        <div>
+            <h1>Granthik AI - Document Classifier</h1>
+            <p>Upload your document for classification and get categorized results!</p>
+        </div>
+    </div>
+
+    <div class="upload-section">
+        <h3>Upload Your Document</h3>
+        <div class="file-input">
+            <input type="file" id="fileInput" />
+        </div>
+        <div class="upload-btn-container">
+            <button class="btn-primary" id="uploadBtn">Upload</button>
+            <div id="loading" class="hidden">Uploading... Please wait.</div>
+        </div>
+        <div id="result" class="results hidden"></div>
+        <div id="metadata" class="metadata hidden"></div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <!-- <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous">
+        let folders = {}; // Object to store folders and their contents
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // User is logged in, display their name or other details
+                document.getElementById("userGreeting").innerText = `Welcome, ${user.displayName || user.email}`;
+            } else {
+                // User is not logged in, redirect to login page
+                window.location.href = "index.html";  // Redirect to login page if not logged in
+            }
+        });
+
+        document.getElementById("foldersButton").addEventListener("click", function () {
+            const userId = localStorage.getItem("userId"); // Get user ID from local storage or session
+            if (!userId) {
+                alert("User not logged in!");
+                return;
+            }
+            window.location.href = `/folders.html?user=${userId}`; // Redirect to user-specific folders page
+        });
+        document.getElementById("uploadBtn").addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const resultDiv = document.getElementById("result");
+            const loadingText = document.getElementById("loading");
+            const metadataDiv = document.getElementById("metadata");
+
+            if (!fileInput.files.length) {
+                alert("Please select a file!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const apiURL = "https://748d-34-71-217-174.ngrok-free.app/upload/"; // Replace with your actual endpoint
+
+            try {
+                loadingText.classList.remove("hidden");
+                resultDiv.classList.add("hidden");
+                metadataDiv.classList.add("hidden");
+
+                const response = await fetch(apiURL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                    <p><strong>Filename:</strong> ${data.filename}</p>
+                    <p><strong>Category:</strong> ${data.category}</p>
+                    <div class="result-tag">${data.category}</div>
+                `;
+
+                    // Show metadata
+                    metadataDiv.classList.remove("hidden");
+                    metadataDiv.innerHTML = `
+                    <p><strong>File Type:</strong> ${file.type}</p>
+                    <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+                `;
+
+                    createFolder(data.category, data.filename); // Create folder and add file to it
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: Something went wrong!</p>`;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `<p style="color: red;">Failed to connect to the server. Check your API URL.</p>`;
+            }
+        });
+
+        // Function to create a folder for the uploaded document category
+        function createFolder(category, filename) {
+            if (!folders[category]) {
+                folders[category] = [];
+            }
+
+            // Add the file to the folder
+            folders[category].push(filename);
+
+            // Display the folder with the files inside it
+            const fileListDiv = document.getElementById("fileList");
+            let folderDiv = document.getElementById(category);
+
+            if (!folderDiv) {
+                folderDiv = document.createElement("div");
+                folderDiv.id = category;
+                folderDiv.classList.add("folder");
+                folderDiv.textContent = `${category} Folder`;
+                fileListDiv.appendChild(folderDiv);
+            }
+
+            // Add the uploaded file inside the folder
+            const fileElement = document.createElement("div");
+            fileElement.textContent = filename;
+            folderDiv.appendChild(fileElement);
+        }
+    </script> 
+    <script>
+        let folders = {}; // Object to store folders and their contents
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // User is logged in, display their name or other details
+                document.getElementById("userGreeting").innerText = `Welcome, ${user.displayName || user.email}`;
+            } else {
+                // User is not logged in, redirect to login page
+                window.location.href = "index.html";  // Redirect to login page if not logged in
+            }
+        });
+    
+        document.getElementById("foldersButton").addEventListener("click", function () {
+            const userId = localStorage.getItem("userId"); // Get user ID from local storage or session
+            if (!userId) {
+                alert("User not logged in!");
+                return;
+            }
+            window.location.href = `/folders.html?user=${userId}`; // Redirect to user-specific folders page
+        });
+    
+        document.getElementById("uploadBtn").addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const resultDiv = document.getElementById("result");
+            const loadingText = document.getElementById("loading");
+            const metadataDiv = document.getElementById("metadata");
+    
+            if (!fileInput.files.length) {
+                alert("Please select a file!");
+                return;
+            }
+    
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+    
+            const apiURL = "https://748d-34-71-217-174.ngrok-free.app/upload/"; // Replace with your actual endpoint
+    
+            try {
+                loadingText.classList.remove("hidden");
+                resultDiv.classList.add("hidden");
+                metadataDiv.classList.add("hidden");
+    
+                const response = await fetch(apiURL, {
+                    method: "POST",
+                    body: formData
+                });
+    
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+    
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p><strong>Filename:</strong> ${data.filename}</p>
+                        <p><strong>Category:</strong> ${data.category}</p>
+                        <div class="result-tag">${data.category}</div>
+                    `;
+    
+                    // Show metadata
+                    metadataDiv.classList.remove("hidden");
+                    metadataDiv.innerHTML = `
+                        <p><strong>File Type:</strong> ${file.type}</p>
+                        <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+                    `;
+    
+                    createFolder(data.category, data.filename); // Create folder and add file to it
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: Something went wrong!</p>`;
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+                resultDiv.innerHTML = `<p style="color: red;">Failed to connect to the server. Check your API URL.</p>`;
+            }
+        });
+    
+        // Function to create a folder for the uploaded document category
+        function createFolder(category, filename) {
+            if (!folders[category]) {
+                folders[category] = [];
+            }
+    
+            // Add the file to the folder
+            folders[category].push(filename);
+    
+            // Display the folder with the files inside it
+            const fileListDiv = document.getElementById("fileList");
+            let folderDiv = document.getElementById(category);
+    
+            if (!folderDiv) {
+                folderDiv = document.createElement("div");
+                folderDiv.id = category;
+                folderDiv.classList.add("folder");
+                folderDiv.textContent = `${category} Folder`;
+    
+                // Add a click event listener to the folder
+                folderDiv.addEventListener("click", function () {
+                    const userId = localStorage.getItem("userId"); // Get the user ID from localStorage
+                    if (!userId) {
+                        alert("User not logged in!");
+                        return;
+                    }
+                    // Redirect to the user's specific folder page
+                    window.location.href = `/folders.html?user=${userId}&category=${category}`;
+                });
+    
+                fileListDiv.appendChild(folderDiv);
+            }
+    
+            // Add the uploaded file inside the folder
+            const fileElement = document.createElement("div");
+            fileElement.textContent = filename;
+            folderDiv.appendChild(fileElement);
+        }
+    </script>
+    
+
+</body> 
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon"
+        href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Granthik_Logo.svg/1280px-Granthik_Logo.svg.png"
+        type="image/png">
+    <style>
+        body {
+            background-color: #FFFFFF;
+            color: #000000;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .icon-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 4rem;
+            color: rgb(58, 114, 243);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #F0F0F0, #D9EAFB);
+            padding: 100px 0;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #007BFF;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            }
+
+            100% {
+                text-shadow: 0 0 20px rgba(0, 123, 255, 1);
+            }
+        }
+
+        .hero-section p {
+            font-size: 1.5rem;
+            color: #555555;
+        }
+
+        .hero-section .btn-primary {
+            background-color: #007BFF;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s, transform 0.3s;
+            color: white;
+        }
+
+        .hero-section .btn-primary:hover {
+            background-color: #3399FF;
+            transform: translateY(-5px);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: #D9EAFB;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            margin: 50px auto;
+        }
+
+        .file-input {
+            border: 2px dashed #007BFF;
+            padding: 50px;
+            text-align: center;
+            color: #3399FF;
+            background: #FFFFFF;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .file-input:hover {
+            border-color: #3399FF;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-btn-container button {
+            padding: 15px 35px;
+            font-size: 1.5rem;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .upload-btn-container button:hover {
+            background-color: #3399FF;
+        }
+
+        .results {
+            background: #D9EAFB;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #000000;
+        }
+
+        .result-tag {
+            display: inline-block;
+            background: #007BFF;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .metadata {
+            margin-top: 15px;
+            background: #A3C4F3;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .folder {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            overflow-y: auto;
+            height: 300px;
+        }
+
+        .folder:hover {
+            background-color: #3399FF;
+        }
+
+        .folder div {
+            margin-top: 5px;
+            font-size: 14px;
+            padding: 5px;
+            background-color: #A3C4F3;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .folders-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2rem;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .folders-button:hover {
+            background-color: #3399FF;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero-section">
+        <button id="foldersButton" class="folders-button">Folders</button>
+        <div>
+            <h1>Granthik AI - Document Classifier</h1>
+            <p>Upload your document for classification and get categorized results!</p>
+        </div>
+    </div>
+
+    <div class="upload-section">
+        <h3>Upload Your Document</h3>
+        <div class="file-input">
+            <input type="file" id="fileInput" />
+        </div>
+        <div class="upload-btn-container">
+            <button class="btn-primary" id="uploadBtn">Upload</button>
+            <div id="loading" class="hidden">Uploading... Please wait.</div>
+        </div>
+        <div id="result" class="results hidden"></div>
+        <div id="metadata" class="metadata hidden"></div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <script>
+        let folders = {}; // Object to store folders and their contents
+
+        document.getElementById("foldersButton").addEventListener("click", function () {
+            const userId = localStorage.getItem("userId"); // Get user ID from local storage or session
+            if (!userId) {
+                alert("User not logged in!");
+                return;
+            }
+            window.location.href = `/folders.html?user=${userId}`; // Redirect to user-specific folders page
+        });
+
+        document.getElementById("uploadBtn").addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const resultDiv = document.getElementById("result");
+            const loadingText = document.getElementById("loading");
+            const metadataDiv = document.getElementById("metadata");
+
+            if (!fileInput.files.length) {
+                alert("Please select a file!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const apiURL = "https://748d-34-71-217-174.ngrok-free.app/upload/"; // Replace with your actual endpoint
+
+            try {
+                loadingText.classList.remove("hidden");
+                resultDiv.classList.add("hidden");
+                metadataDiv.classList.add("hidden");
+
+                const response = await fetch(apiURL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p><strong>Filename:</strong> ${data.filename}</p>
+                        <p><strong>Category:</strong> ${data.category}</p>
+                        <div class="result-tag">${data.category}</div>
+                    `;
+
+                    // Show metadata
+                    metadataDiv.classList.remove("hidden");
+                    metadataDiv.innerHTML = `
+                        <p><strong>File Type:</strong> ${file.type}</p>
+                        <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+                    `;
+                } else {
+                    alert("Error uploading file!");
+                }
+            } catch (error) {
+                loadingText.classList.add("hidden");
+                alert("Error: " + error.message);
+            }
+        });
+
+        async function createFolder(category) {
+            if (!folders[category]) {
+                folders[category] = [];
+                const folderDiv = document.createElement("div");
+                folderDiv.classList.add("folder");
+                folderDiv.innerHTML = `<h4>${category}</h4>`;
+                document.getElementById("fileList").appendChild(folderDiv);
+            }
+        }
+    </script>
+</body>
+
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="icon"
+        href="https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Granthik_Logo.svg/1280px-Granthik_Logo.svg.png"
+        type="image/png">
+    <style>
+        body {
+            background-color: #FFFFFF;
+            color: #000000;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .icon-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 4rem;
+            color: rgb(58, 114, 243);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #F0F0F0, #D9EAFB);
+            padding: 100px 0;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .hero-section h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #007BFF;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            0% {
+                text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+            }
+
+            100% {
+                text-shadow: 0 0 20px rgba(0, 123, 255, 1);
+            }
+        }
+
+        .hero-section p {
+            font-size: 1.5rem;
+            color: #555555;
+        }
+
+        .hero-section .btn-primary {
+            background-color: #007BFF;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            transition: background-color 0.3s, transform 0.3s;
+            color: white;
+        }
+
+        .hero-section .btn-primary:hover {
+            background-color: #3399FF;
+            transform: translateY(-5px);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: #D9EAFB;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            margin: 50px auto;
+        }
+
+        .file-input {
+            border: 2px dashed #007BFF;
+            padding: 50px;
+            text-align: center;
+            color: #3399FF;
+            background: #FFFFFF;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .file-input:hover {
+            border-color: #3399FF;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-btn-container button {
+            padding: 15px 35px;
+            font-size: 1.5rem;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .upload-btn-container button:hover {
+            background-color: #3399FF;
+        }
+
+        .results {
+            background: #D9EAFB;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            color: #000000;
+        }
+
+        .result-tag {
+            display: inline-block;
+            background: #007BFF;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin-right: 5px;
+            font-size: 14px;
+        }
+
+        .metadata {
+            margin-top: 15px;
+            background: #A3C4F3;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .folder {
+            background-color: #007BFF;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            width: 200px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            overflow-y: auto;
+            height: 300px;
+        }
+
+        .folder:hover {
+            background-color: #3399FF;
+        }
+
+        .folder div {
+            margin-top: 5px;
+            font-size: 14px;
+            padding: 5px;
+            background-color: #A3C4F3;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .folders-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 2rem;
+            background-color: #007BFF;
+            color: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .folders-button:hover {
+            background-color: #3399FF;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="hero-section">
+        <button id="foldersButton" class="folders-button">Folders</button>
+        <div>
+            <h1>Granthik AI - Document Classifier</h1>
+            <p>Upload your document for classification and get categorized results!</p>
+        </div>
+    </div>
+
+    <div class="upload-section">
+        <h3>Upload Your Document</h3>
+        <div class="file-input">
+            <input type="file" id="fileInput" />
+        </div>
+        <div class="upload-btn-container">
+            <button class="btn-primary" id="uploadBtn">Upload</button>
+            <div id="loading" class="hidden">Uploading... Please wait.</div>
+        </div>
+        <div id="result" class="results hidden"></div>
+        <div id="metadata" class="metadata hidden"></div>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <script>
+        document.getElementById("foldersButton").addEventListener("click", function () {
+            window.location.href = "/folders.html"; // Redirect to folders page without login check
+        });
+
+        document.getElementById("uploadBtn").addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const resultDiv = document.getElementById("result");
+            const loadingText = document.getElementById("loading");
+            const metadataDiv = document.getElementById("metadata");
+
+            if (!fileInput.files.length) {
+                alert("Please select a file!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const apiURL = "https://4c56-34-125-229-221.ngrok-free.app/upload/"; // Replace with your actual endpoint
+
+            try {
+                loadingText.classList.remove("hidden");
+                resultDiv.classList.add("hidden");
+                metadataDiv.classList.add("hidden");
+
+                const response = await fetch(apiURL, {
+                    method: "POST",
+                    body: formData
+                });
+
+                loadingText.classList.add("hidden");
+                resultDiv.classList.remove("hidden");
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <p><strong>Filename:</strong> ${data.filename}</p>
+                        <p><strong>Category:</strong> ${data.category}</p>
+                        <div class="result-tag">${data.category}</div>
+                    `;
+
+                    // Show metadata
+                    metadataDiv.classList.remove("hidden");
+                    metadataDiv.innerHTML = `
+                        <p><strong>File Type:</strong> ${file.type}</p>
+                        <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+                    `;
+
+                    // Move the file to the appropriate folder
+                    moveToFolder(data.category, data.filename, data.file_url);
+                } else {
+                    alert("Error uploading file!");
+                }
+            } catch (error) {
+                loadingText.classList.add("hidden");
+                alert("Error: " + error.message);
+            }
+        });
+
+        function moveToFolder(category, filename, fileURL) {
+            const fileListDiv = document.getElementById("fileList");
+            let folder = document.getElementById(category);
+
+            if (!folder) {
+                folder = document.createElement("div");
+                folder.id = category;
+                folder.classList.add("folder");
+                folder.innerHTML = `<h3>${category}</h3>`;
+                fileListDiv.appendChild(folder);
+            }
+
+            const fileDiv = document.createElement("div");
+            fileDiv.innerHTML = `<a href="${fileURL}" target="_blank">${filename}</a>`;
+            folder.appendChild(fileDiv);
+
+            // Highlight the folder
+            folder.style.backgroundColor = "#3399FF";
+        }
+    </script>
+</body>
+
+</html> -->
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granthik AI - Document Classifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script type="module" src="firebase.js"></script>
+<style>
+    body {
+        background-color: #333333;
+        color: #f8f9fa;
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+    }
+
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    header {
+        background: #1D2B5F;
+        color: white;
+        padding: 20px 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    header nav {
+        display: flex;
+        gap: 20px;
+
+    }
+
+    header nav a {
+        color: white;
+        font-weight: 500;
+        transition: opacity 0.3s;
+    }
+
+    header nav a:hover {
+        opacity: 0.8;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #1D2B5F, #3399FF);
+        /* Dark blue to a vibrant blue gradient */
+        color: white;
+        padding: 100px 20px;
+        text-align: center;
+    }
+
+    .hero-section h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+
+    .hero-section p {
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+
+    .hero-section .btn-primary {
+        background: white;
+        color: #1D2B5F;
+        /* Dark blue */
+        padding: 12px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.3s;
+    }
+
+    .hero-section .btn-primary:hover {
+        background: #f0f0f0;
+        transform: translateY(-3px);
+    }
+
+    .features-section {
+        background: white;
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .features-section h2 {
+        font-size: 2rem;
+        margin-bottom: 40px;
+        color: #1D2B5F;
+    }
+
+    .features-grid {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    .feature-card {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        width: 250px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .feature-card i {
+        font-size: 2rem;
+        color: #1D2B5F;
+        margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #1D2B5F;
+    }
+
+    .feature-card p {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    .upload-section {
+        background: white;
+        padding: 40px 20px;
+        max-width: 800px;
+        margin: 50px auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .upload-section h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #1D2B5F;
+    }
+
+    .file-input {
+        border: 2px dashed #1D2B5F;
+        padding: 40px;
+        color: #1D2B5F;
+        background: #f8f9fa;
+        cursor: pointer;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        transition: border-color 0.3s, background 0.3s;
+    }
+
+    .file-input:hover {
+        border-color: #3399FF;
+        background: #e9f5ff;
+    }
+
+    .upload-btn-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .upload-btn-container button {
+
+        color: white;
+        padding: 12px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.3s;
+    }
+
+    .upload-btn-container button:hover {
+        background: #3399FF;
+        transform: translateY(-3px);
+    }
+
+    .results {
+        background: #e9f5ff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        text-align: left;
+        color: #1D2B5F;
+    }
+
+    .result-tag {
+        display: inline-block;
+        background: #1D2B5F;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .metadata {
+        background: #cce5ff;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        color: #1D2B5F;
+    }
+
+    .file-list {
+        background: white;
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 50px auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-list h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #1D2B5F;
+    }
+
+    .folder {
+        background: #1D2B5F;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .folder h3 {
+        margin: 0 0 10px;
+        font-size: 1.5rem;
+    }
+
+    .folder div {
+        background: #cce5ff;
+        color: #1D2B5F;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .loading {
+        background-color: #ff6347;
+        /* Bright red color */
+        color: white;
+        /* White text color */
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .metadata-container {
+        background-color: #f0f8ff;
+        padding: 10px;
+        border: 2px solid #00aaff;
+        border-radius: 8px;
+        margin-top: 15px;
+    }
+
+    #searchBar {
+        padding: 10px;
+        width: 50%;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .search-container input:focus {
+        outline: none;
+        border-color: #2980b9;
+    }
+
+
+
+    .hidden {
+        display: none;
+    }
+</style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Granthik AI</h1>
+        <nav>
+            <a href="#">Home</a>
+            <a href="#features">Features</a>
+            <a href="#upload">Upload</a>
+        </nav>
+    </header>
+
+    <section class="hero-section">
+        <h1>Document Classification Made Simple</h1>
+        <p>Upload your documents and let Granthik AI categorize them automatically. Fast, accurate, and easy to use.</p>
+        <button class="btn-primary" id="uploadBtnHero">Upload Document</button>
+    </section>
+
+    <section class="features-section" id="features">
+        <h2>Features</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-search"></i>
+                <h3>Advanced Search</h3>
+                <p>Quickly find your files using Elasticsearch-powered search. Fast, accurate, and scalable.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-brain"></i>
+                <h3>AI-Powered</h3>
+                <p>Our advanced AI algorithms classify your documents with high accuracy.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-folder"></i>
+                <h3>Organized Folders</h3>
+                <p>Automatically sort your files into organized folders using our Granthik AI</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="upload-section" id="upload">
+        <h2>Upload Your Document</h2>
+        <div class="file-input">
+            <input type="file" id="fileInput" />
+            <p>Drag & drop your file here or click to browse</p>
+        </div>
+        <div class="upload-btn-container">
+            <button id="uploadBtn">Upload</button>
+            <div id="loading" class="hidden">Uploading... Please wait.</div>
+        </div>
+        <div id="result" class="results hidden"></div>
+        <div id="metadata" class="metadata hidden"></div>
+    </section>
+
+    <section class="file-list" id="fileList">
+        <h2>Your Folders</h2>
+        <input type="text" id="searchBar" placeholder="Search files..." onkeyup="searchFiles()" />
+        <!-- This is where the folders and files will be displayed -->
+        <div id="yourFolders"></div>
+    </section>
+
+    <script>
+//         document.addEventListener("DOMContentLoaded", function () {
+//             // Trigger file input when "Upload Document" button in hero section is clicked
+//             const uploadBtnHero = document.getElementById("uploadBtnHero");
+//             if (uploadBtnHero) {
+//                 uploadBtnHero.addEventListener("click", function () {
+//                     document.getElementById("fileInput").click(); // Open file selection dialog
+//                 });
+//             }
+
+//             // Handle file upload when "Upload" button is clicked
+//             const uploadBtn = document.getElementById("uploadBtn");
+//             if (uploadBtn) {
+//                 uploadBtn.addEventListener("click", async () => {
+//                     const fileInput = document.getElementById("fileInput");
+//                     const resultDiv = document.getElementById("result");
+//                     const loadingText = document.getElementById("loading");
+//                     const metadataDiv = document.getElementById("metadata");
+
+//                     // Check if a file is selected
+//                     if (!fileInput.files.length) {
+//                         alert("Please select a file!");
+//                         return;
+//                     }
+
+//                     const file = fileInput.files[0];
+//                     console.log("Selected file:", file);
+
+//                     const formData = new FormData();
+//                     formData.append("file", file);
+
+//                     const apiURL = "https://bb4f-34-125-229-221.ngrok-free.app/upload/"; // Replace with your actual endpoint
+//                     console.log("API URL:", apiURL);
+
+//                     try {
+//                         // Show loading text
+//                         loadingText.classList.remove("hidden");
+//                         resultDiv.classList.add("hidden");
+//                         metadataDiv.classList.add("hidden");
+
+//                         // Send the file to the server
+//                         const response = await fetch(apiURL, {
+//                             method: "POST",
+//                             body: formData,
+//                         });
+
+//                         console.log("Response status:", response.status);
+
+//                         // Hide loading text
+//                         loadingText.classList.add("hidden");
+
+//                         if (response.ok) {
+//                             const data = await response.json();
+//                             console.log("Response data:", data);
+
+//                             // Display the result
+//                             resultDiv.classList.remove("hidden");
+//                             resultDiv.innerHTML = `
+//                                 <p><strong>Filename:</strong> ${data.filename}</p>
+//                                 <p><strong>Category:</strong> ${data.category}</p>
+//                                 <div class="result-tag">${data.category}</div>
+//                                 <div class="metadata-container">
+//         <p><strong>MetaData:</strong></p>
+//         <ul>
+//             <li><strong>Dates:</strong> ${data.metadata.dates.length > 0 ? data.metadata.dates.join(', ') : "No dates found"}</li>
+//             <li><strong>Amounts:</strong> ${data.metadata.amounts.length > 0 ? data.metadata.amounts.join(', ') : "No amounts found"}</li>
+//             <li><strong>Keywords:</strong></li>
+//             <ul>
+//                 ${Object.entries(data.metadata.keywords).map(([key, value]) => {
+//                                 return `<li><strong>${key}:</strong> ${value}</li>`;
+//                             }).join('')}
+//             </ul>
+//         </ul>
+//     </div>
+// `;
+
+
+//                             // Show metadata
+//                             metadataDiv.classList.remove("hidden");
+//                             metadataDiv.innerHTML = `
+//                                 <p><strong>File Type:</strong> ${file.type}</p >
+//                                     <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+//                             `;
+
+//                             // Move the file to the appropriate folder
+//                             moveToFolder(data.category, data.filename, data.file_url);
+//                         } else {
+//                             alert("Error uploading file! Please check the console for details.");
+//                             console.error("Upload failed:", response.status, response.statusText);
+//                         }
+//                     } catch (error) {
+//                         loadingText.classList.add("hidden");
+//                         alert("Error: " + error.message);
+//                         console.error("Error:", error);
+//                     }
+//                 });
+//             }
+
+//             // Move file to the appropriate folder
+//             function moveToFolder(category, filename, fileURL) {
+//                 const fileListDiv = document.getElementById("fileList");
+//                 let folder = document.getElementById(category);
+
+//                 if (!folder) {
+//                     folder = document.createElement("div");
+//                     folder.id = category;
+//                     folder.classList.add("folder");
+//                     folder.innerHTML = `<h3> ${category}</h3>`;
+//                     fileListDiv.appendChild(folder);
+//                 }
+
+//                 const fileDiv = document.createElement("div");
+//                 fileDiv.innerHTML = `<a href = "${fileURL}" target = "_blank" > ${filename}</a>`;
+//                 folder.appendChild(fileDiv);
+//             }
+//         });
+//         function searchFiles() {
+//     // Get the search query
+//     const query = document.getElementById('searchBar').value.toLowerCase();
+    
+//     // Get all folder divs inside #yourFolders
+//     const folders = document.querySelectorAll('#yourFolders .folder');
+    
+//     // Loop through each folder
+//     folders.forEach(folder => {
+//         const folderName = folder.querySelector('h3').textContent.toLowerCase(); // Get folder name
+        
+//         // Check if the folder name matches the search query
+//         if (folderName.includes(query)) {
+//             folder.style.display = 'block'; // Show folder
+//         } else {
+//             folder.style.display = 'none'; // Hide folder
+//         }
+
+//         // Additionally, filter files inside each folder
+//         const files = folder.querySelectorAll('div'); // Get all files in the folder
+//         files.forEach(file => {
+//             const fileName = file.textContent.toLowerCase();
+//             if (fileName.includes(query)) {
+//                 file.style.display = 'block'; // Show matching files
+//             } else {
+//                 file.style.display = 'none'; // Hide non-matching files
+//             }
+//         });
+//     });
+// }
+document.addEventListener("DOMContentLoaded", function () {
+    // Trigger file input when "Upload Document" button in hero section is clicked
+    const uploadBtnHero = document.getElementById("uploadBtnHero");
+    if (uploadBtnHero) {
+        uploadBtnHero.addEventListener("click", function () {
+            document.getElementById("fileInput").click(); // Open file selection dialog
+        });
+    }
+
+    // Handle file upload when "Upload" button is clicked
+    const uploadBtn = document.getElementById("uploadBtn");
+    if (uploadBtn) {
+        uploadBtn.addEventListener("click", async () => {
+            const fileInput = document.getElementById("fileInput");
+            const resultDiv = document.getElementById("result");
+            const loadingText = document.getElementById("loading");
+            const metadataDiv = document.getElementById("metadata");
+
+            // Check if a file is selected
+            if (!fileInput.files.length) {
+                alert("Please select a file!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            console.log("Selected file:", file);
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const apiURL = "https://bb4f-34-125-229-221.ngrok-free.app/upload/"; // Replace with your actual endpoint
+            console.log("API URL:", apiURL);
+
+            try {
+                // Show loading text
+                loadingText.classList.remove("hidden");
+                resultDiv.classList.add("hidden");
+                metadataDiv.classList.add("hidden");
+
+                // Send the file to the server
+                const response = await fetch(apiURL, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                console.log("Response status:", response.status);
+
+                // Hide loading text
+                loadingText.classList.add("hidden");
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Response data:", data);
+
+                    // Display the result
+                    resultDiv.classList.remove("hidden");
+                    resultDiv.innerHTML = `
+                        <p><strong>Filename:</strong> ${data.filename}</p>
+                        <p><strong>Category:</strong> ${data.category}</p>
+                        <div class="result-tag">${data.category}</div>
+                        <div class="metadata-container">
+                            <p><strong>MetaData:</strong></p>
+                            <ul>
+                                <li><strong>Dates:</strong> ${data.metadata.dates.length > 0 ? data.metadata.dates.join(', ') : "No dates found"}</li>
+                                <li><strong>Amounts:</strong> ${data.metadata.amounts.length > 0 ? data.metadata.amounts.join(', ') : "No amounts found"}</li>
+                                <li><strong>Keywords:</strong></li>
+                                <ul>
+                                    ${Object.entries(data.metadata.keywords).map(([key, value]) => {
+                                        return `<li><strong>${key}:</strong> ${value}</li>`;
+                                    }).join('')}
+                                </ul>
+                            </ul>
+                        </div>
+                    `;
+
+                    // Show metadata
+                    metadataDiv.classList.remove("hidden");
+                    metadataDiv.innerHTML = `
+                        <p><strong>File Type:</strong> ${file.type}</p>
+                        <p><strong>File Size:</strong> ${Math.round(file.size / 1024)} KB</p>
+                    `;
+
+                    // Move the file to the appropriate folder
+                    moveToFolder(data.category, data.filename, data.file_url);
+                } else {
+                    alert("Error uploading file! Please check the console for details.");
+                    console.error("Upload failed:", response.status, response.statusText);
+                }
+            } catch (error) {
+                loadingText.classList.add("hidden");
+                alert("Error: " + error.message);
+                console.error("Error:", error);
+            }
+        });
+    }
+
+    // Move file to the appropriate folder
+    function moveToFolder(category, filename, fileURL) {
+        const fileListDiv = document.getElementById("fileList");
+        let folder = document.getElementById(category);
+
+        if (!folder) {
+            folder = document.createElement("div");
+            folder.id = category;
+            folder.classList.add("folder");
+            folder.innerHTML = `<h3> ${category}</h3>`;
+            fileListDiv.appendChild(folder);
+        }
+
+        const fileDiv = document.createElement("div");
+        fileDiv.innerHTML = `<a href = "${fileURL}" target = "_blank">${filename}</a>`;
+        folder.appendChild(fileDiv);
+    }
+
+    // Search files based on query
+    function searchFiles() {
+        // Get the search query
+        const query = document.getElementById('searchBar').value.toLowerCase();
+        
+        // Get all folder divs inside #yourFolders
+        const folders = document.querySelectorAll('#yourFolders .folder');
+        
+        // Loop through each folder
+        folders.forEach(folder => {
+            const folderName = folder.querySelector('h3').textContent.toLowerCase(); // Get folder name
+            
+            // Check if the folder name matches the search query
+            if (folderName.includes(query)) {
+                folder.style.display = 'block'; // Show folder
+            } else {
+                folder.style.display = 'none'; // Hide folder
+            }
+
+            // Additionally, filter files inside each folder
+            const files = folder.querySelectorAll('div'); // Get all files in the folder
+            files.forEach(file => {
+                const fileName = file.textContent.toLowerCase();
+                if (fileName.includes(query)) {
+                    file.style.display = 'block'; // Show matching files
+                } else {
+                    file.style.display = 'none'; // Hide non-matching files
+                }
+            });
+        });
+    }
+});
+
+    </script>
+</body>
+
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Automation - File Upload</title>
+    <style>
+        body {
+             font-family: Arial, sans-serif;
+             background-color: #f4f7fb;
+             margin: 0;
+             padding: 0;
+             color: #333;
+         }
+ 
+         header {
+             background-color: #0077b6;
+             color: white;
+             text-align: center;
+             padding: 20px;
+         }
+ 
+         h1,
+         h2 {
+             margin: 0;
+             padding: 10px;
+         }
+ 
+         #file-upload,
+         #user-files {
+             margin: 20px auto;
+             width: 80%;
+             max-width: 800px;
+             background-color: white;
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+         }
+ 
+         .upload-container {
+             text-align: center;
+         }
+ 
+         input[type="file"] {
+             margin-bottom: 15px;
+         }
+ 
+         button {
+             background-color: #0077b6;
+             color: white;
+             padding: 10px 20px;
+             border: none;
+             border-radius: 4px;
+             cursor: pointer;
+         }
+ 
+         button:hover {
+             background-color: #005f87;
+         }
+ 
+         #filesList {
+             margin-top: 20px;
+             display: flex;
+             flex-wrap: wrap;
+             gap: 15px;
+         }
+ 
+         .file-card {
+             background-color: #f1f1f1;
+             padding: 15px;
+             width: 200px;
+             border-radius: 8px;
+             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+             text-align: center;
+         }
+ 
+         .file-card a {
+             display: block;
+             margin-top: 10px;
+             color: #0077b6;
+             text-decoration: none;
+         }
+ 
+         .file-card a:hover {
+             text-decoration: underline;
+         }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Document Automation - Upload Files</h1>
+    </header>
+
+    <section id="file-upload">
+        <div class="upload-container">
+            <h2>Upload a File</h2>
+            <input type="file" id="fileInput" accept=".pdf, .docx, .png, .jpg, .jpeg" />
+            <button id="uploadButton">Upload</button>
+        </div>
+    </section>
+
+    <section id="user-files">
+        <h2>Your Uploaded Files</h2>
+        <div id="filesList"></div>
+    </section>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyALY-EAMIFkoRSz1rYAZxsH4XYaybLW10I",
+            authDomain: "granthik-ai.firebaseapp.com",
+            projectId: "granthik-ai",
+            storageBucket: "granthik-ai.firebasestorage.app",
+            messagingSenderId: "258018999740",
+            appId: "1:258018999740:web:dce62dd9ce985479c13fb9",
+            measurementId: "G-ZETJMXK6FM"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        const apiUrl = 'https://271f-34-125-229-221.ngrok-free.app'; // Change to your backend URL
+
+        // Upload file to backend and update UI with file metadata
+        async function uploadFile() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            const user = auth.currentUser; // Get the current logged-in user
+
+            if (!user) {
+                alert("Please log in to upload a file.");
+                return;
+            }
+
+            const userId = user.uid; // Get the actual logged-in user ID
+
+            if (!file) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("user_id", userId);
+
+            try {
+                // Upload file using Fetch API
+                const response = await fetch(`${apiUrl}/upload/`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('File uploaded successfully!');
+                    displayUploadedFiles();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('An error occurred while uploading the file.');
+            }
+        }
+
+        // Fetch and display uploaded files for the user
+        async function displayUploadedFiles() {
+            const user = auth.currentUser;  // Get the current logged-in user
+
+            if (!user) {
+                alert("Please log in to view your files.");
+                return;
+            }
+
+            const userId = user.uid;  // Get the user ID
+
+            try {
+                // Fetch files from your backend or cloud storage using userId
+                const response = await fetch(`${apiUrl}/api/user-files/${userId}`);
+                const files = await response.json();
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch files.");
+                }
+
+                // Display the files
+                const filesList = document.getElementById("filesList");
+                filesList.innerHTML = ''; // Clear the current file list
+
+                files.forEach(file => {
+                    const fileCard = document.createElement('div');
+                    fileCard.classList.add('file-card');
+                    fileCard.innerHTML = `
+                        <p>${file.name}</p>
+                        <a href="${file.url}" target="_blank">View</a>
+                    `;
+                    filesList.appendChild(fileCard);
+                });
+            } catch (error) {
+                console.error('Error fetching files:', error);
+                alert('An error occurred while fetching your files.');
+            }
+        }
+
+        // Load uploaded files on page load
+        window.onload = displayUploadedFiles;
+
+        // Add click event to the upload button
+        document.getElementById("uploadButton").addEventListener("click", uploadFile);
+    </script>
+</body>
+
+</html> -->

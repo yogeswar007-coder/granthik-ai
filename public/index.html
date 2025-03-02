@@ -1,0 +1,141 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - Granthik AI</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+</head>
+<body>
+    <h2>Signup for Granthik AI</h2>
+    <input type="email" id="email" placeholder="Enter Email" required>
+    <input type="password" id="password" placeholder="Enter Password" required>
+    <button id="signupBtn">Sign Up</button>
+    <p>Already have an account? <a href="index.html">Login here</a></p>
+
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyALY-EAMIFkoRSz1rYAZxsH4XYaybLW10I",
+  authDomain: "granthik-ai.firebaseapp.com",
+  projectId: "granthik-ai",
+  storageBucket: "granthik-ai.firebasestorage.app",
+  messagingSenderId: "258018999740",
+  appId: "1:258018999740:web:dce62dd9ce985479c13fb9",
+  measurementId: "G-ZETJMXK6FM"
+};
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        document.getElementById("signupBtn").addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    sessionStorage.setItem("loggedIn", "true"); // Store login state
+                    window.location.href = "dashboard.html"; // Redirect after signup
+                })
+                .catch((error) => {
+                    alert("Signup failed: " + error.message);
+                });
+        });
+    </script>
+</body>
+</html> -->
+
+<!-- index.html (Login Page) -->
+<!-- index.html (Login Page) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Granthik AI</title>
+    <style>
+        body {
+            background-color: #ffffff;  /* White background */
+            color: #333333;             /* Dark text for contrast */
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 400px;              /* Increased container width */
+            padding: 40px;             /* Increased padding */
+            background: #f4f4f4;       /* Light gray background */
+            border-radius: 12px;       /* Rounded corners */
+            box-shadow: 0px 0px 20px rgba(0, 0, 255, 0.5);  /* Blue shadow */
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;                 /* Increased gap between elements */
+        }
+        input, button {
+            width: 100%;
+            padding: 16px;             /* Larger padding */
+            margin: 12px 0;            /* Increased margin */
+            border: none;
+            border-radius: 8px;        /* Rounded borders */
+            background: #e0e0e0;       /* Light gray for inputs */
+            color: #333;               /* Dark text for input */
+            font-size: 18px;           /* Larger text size */
+        }
+        button {
+            background-color: #007BFF; /* Blue button background */
+            color: white;
+            cursor: pointer;
+            font-size: 18px;           /* Larger font size */
+        }
+        .btn-google {
+            background-color: #ffffff; /* White button for Google login */
+            color: #4285F4;            /* Google blue */
+            border: 1px solid #ccc;    /* Border for the Google button */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;                 /* Larger gap */
+            font-size: 18px;           /* Larger font size */
+            padding: 16px;             /* Larger padding */
+            margin: 12px 0;            /* Increased margin */
+            border-radius: 8px;        /* Rounded corners */
+        }
+        .btn-google img {
+            width: 24px;               /* Larger icon size */
+            height: 24px;
+        }
+        a {
+            color: #007BFF;            /* Blue color for links */
+            text-decoration: none;     /* Remove underline */
+            font-weight: bold;
+            font-size: 18px;           /* Larger font size */
+        }
+        p {
+            font-size: 18px;           /* Larger paragraph font size */
+        }
+        p a:hover {
+            text-decoration: underline; /* Underline on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button onclick="login()">Login</button>
+
+        <div class="btn-google" onclick="googleLogin()">
+            <img src="google_logo.png" alt="Google Logo">
+            Continue with Google
+        </div>
+        
+        <p>Don't have an account? <a href="signup.html">Sign up</a></p>
+    </div>
+    <script type="module" src="firebase.js"></script>
+</body>
+</html>

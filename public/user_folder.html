@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Folder - Granthik AI</title>
+</head>
+<body>
+    <h1>Your Folder</h1>
+    <div id="folderDetails"></div>
+
+    <script type="module" src="firebase.js"></script>
+    <script>
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // User is logged in, load the folder details
+                const urlParams = new URLSearchParams(window.location.search);
+                const folderId = urlParams.get('folderId');
+                loadFolderDetails(user, folderId);
+            } else {
+                // Redirect to login if the user is not logged in
+                window.location.href = "index.html";
+            }
+        });
+
+        // Function to load folder details
+        function loadFolderDetails(user, folderId) {
+            const folderDetailsContainer = document.getElementById("folderDetails");
+
+            const folderRef = firebase.firestore().collection('users').doc(user.uid).collection('folders').doc(folderId);
+
+            folderRef.get().then(doc => {
+                if (doc.exists) {
+                    const folderData = doc.data();
+                    folderDetailsContainer.innerHTML = `<h2>${folderData.name}</h2><p>${folderData.description}</p>`;
+                } else {
+                    folderDetailsContainer.innerHTML = "<p>Folder not found.</p>";
+                }
+            }).catch(error => {
+                console.error("Error loading folder details: ", error);
+            });
+        }
+    </script>
+</body>
+</html>
