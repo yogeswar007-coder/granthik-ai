@@ -1,0 +1,147 @@
+/* Dark Theme with Red Accents */
+body.dark-theme {
+  background-color: #0A0A0A;
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #0A0A0A, #1A1A1A);
+  padding: 150px 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.hero-section h1 {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #FF2E2E;
+  text-shadow: 0 0 10px rgba(255, 46, 46, 0.7);
+}
+
+.hero-section p {
+  font-size: 1.5rem;
+  color: #CCCCCC;
+}
+
+.hero-section .btn-primary {
+  background-color: #FF2E2E;
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.2rem;
+}
+
+.hero-section .btn-primary:hover {
+  background-color: #FF5E5E;
+  transform: translateY(-5px);
+}
+
+/* File Upload Box */
+#fileInput {
+  border: 2px dashed #ff2e2e;
+  padding: 15px;
+  text-align: center;
+  color: #ff5e5e;
+  background: #0A0A0A;
+  cursor: pointer;
+}
+
+#fileInput:hover {
+  border-color: #ff5e5e;
+}
+
+/* Results Section */
+#results {
+  background: #1A1A1A;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.result-tag {
+  display: inline-block;
+  background: #ff2e2e;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin-right: 5px;
+  font-size: 14px;
+}
+
+/* Folder Section */
+#folderSection {
+  background-color: #1A1A1A;
+  padding: 20px 0;
+}
+
+#folderSection h3 {
+  color: #FF2E2E;
+  text-align: center;
+}
+
+.folder-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.folder-item {
+  background-color: #0A0A0A;
+  color: #FFFFFF;
+  border: 2px solid #FF2E2E;
+  margin: 10px;
+  padding: 15px;
+  width: 250px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.folder-item:hover {
+  background-color: #FF2E2E;
+  color: #0A0A0A;
+}
+
+.folder-item p {
+  margin: 5px 0;
+}
+
+.folder-item .btn-view {
+  background-color: #FF2E2E;
+  border: none;
+  color: #0A0A0A;
+  padding: 8px 15px;
+  font-size: 1rem;
+}
+
+.folder-item .btn-view:hover {
+  background-color: #FF5E5E;
+}
+
+/* Navbar */
+.navbar {
+  background-color: rgba(10, 10, 10, 0.9);
+  backdrop-filter: blur(5px);
+}
+
+.navbar .nav-link {
+  color: #ffffff;
+  transition: color 0.3s;
+}
+
+.navbar .nav-link:hover {
+  color: #ff2e2e;
+}
+
+.drop-zone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  text-align: center;
+}
+
+.drop-zone.dragging {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
